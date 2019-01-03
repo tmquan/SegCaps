@@ -1,5 +1,5 @@
 from Utilities import *
-from Models import *
+from Models_keras import *
 from Losses import *
 
 from albumentations import (
@@ -230,8 +230,8 @@ class Model(ModelDesc):
     def generator(self, img, last_dim=1, nl=INLReLU, nb_filters=64):
         assert img is not None
         # ret = arch_fusionnet_translator_2d(img, last_dim=last_dim, nl=nl, nb_filters=nb_filters)
-        M = Tiramisu()
-        ret = M.create()(img)
+        ret = create_fcn_dense_net(img, input_shape=(512, 512, 1), activation='tanh')
+        # ret = M(img)
         return ret 
 
     def inputs(self):
