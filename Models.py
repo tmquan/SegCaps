@@ -180,16 +180,16 @@ class Tiramisu():
 
     def TransitionDown(self,filters):
         model = self.model
-        # model.add(BatchNormalization(mode=0, #axis=1,
-        #                              gamma_regularizer=l2(0.0001),
-        #                              beta_regularizer=l2(0.0001)))
+        model.add(BatchNormalization(mode=0, #axis=1,
+                                     gamma_regularizer=l2(0.0001),
+                                     beta_regularizer=l2(0.0001)))
         model.add(Activation('relu'))
         model.add(Conv2D(filters, kernel_size=(1, 1), padding='same', strides=(2, 2),
                                   kernel_initializer="he_uniform"))
         model.add(Dropout(0.2))
-        # model.add(MaxPooling2D( pool_size=(2, 2),
-        #                         strides=(2, 2),
-        #                         data_format='channels_last'))
+        model.add(MaxPooling2D( pool_size=(2, 2),
+                                strides=(2, 2),
+                                data_format='channels_last'))
 
     def TransitionUp(self,filters,input_shape,output_shape):
         model = self.model
