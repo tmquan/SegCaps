@@ -22,6 +22,8 @@ from tensorpack.utils.utils import *            #get_rng
 from tensorpack.tfutils import *                #optimizer, gradproc
 from tensorpack.tfutils.summary import *        #add_moving_summary, add_param_summary, add_tensor_summary
 from tensorpack.tfutils.scope_utils import *    #auto_reuse_variable_scope
+from tensorpack.utils.argtools import *    #auto_reuse_variable_scope
+from tensorpack.contrib.keras import KerasPhaseCallback
 ###############################################################################
 from tensorlayer.cost import * #binary_cross_entropy, absolute_difference_error, dice_coe, cross_entropy
 ###############################################################################
