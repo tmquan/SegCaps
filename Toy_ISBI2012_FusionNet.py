@@ -1,5 +1,5 @@
 from Utilities import *
-from Models import *
+from Model_FusionNet import *
 from Losses import *
 
 from albumentations import (
@@ -168,7 +168,7 @@ class ImageDataFlow(RNGDataFlow):
                                 VerticalFlip(p=0.5),              
                                 RandomRotate90(p=0.5),
                                 OneOf([
-                                    ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03, interpolation=cv2.INTER_NEAREST),
+                                    ElasticTransform(p=0.5, alpha=1, sigma=5, alpha_affine=5, interpolation=cv2.INTER_NEAREST),
                                     GridDistortion(p=0.5, interpolation=cv2.INTER_NEAREST),
                                     OpticalDistortion(p=0.5, distort_limit=(0.05, 0.05), shift_limit=(0, 0), interpolation=cv2.INTER_NEAREST)                  
                                     ], p=0.8),
@@ -201,13 +201,13 @@ class ImageDataFlow(RNGDataFlow):
                    ] 
 
 ###############################################################################
-def get_data(dataDir, isTrain=False, isValid=False, isTest=False, shape=[16, 320, 320]):
+def get_data(dataDir, isTrain=False, isValid=False, isTest=False, shape=[1, 512, 512]):
     # Process the directories 
     if isTrain:
         num=500
         names = ['trainA', 'trainB']
     if isValid:
-        num=1
+        num=10
         names = ['trainA', 'trainB']
     if isTest:
         num=10
@@ -296,11 +296,14 @@ class VisualizeRunner(Callback):
             ['image', 'label'], ['viz'])
 
     def _before_train(self):
-        pass
+        global args
+        self.dset = get_data(args.data, isTrain=False, isValid=True, shape=[1, 512, 512])
+        self.dset.reset_state()
 
     def _trigger(self):
-        for lst in self.dset.get_data():
-            viz_test = self.pred(lst)
+        for image, label in self.dset.get_data():
+            # print(image.shape, label.shape)
+            viz_test = self.pred(image, label)
             viz_test = np.squeeze(np.array(viz_test))
             self.trainer.monitors.put_image('viz_test', viz_test)
 
@@ -416,23 +419,18 @@ def sample(dataDir, model_path, prefix='.'):
     return None
 
 
-   
-
-  
+     
 ###############################################################################
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu',        default='0', help='comma seperated list of GPU(s) to use.')
+    parser.add_argument('--gpu',   default='0', help='comma seperated list of GPU(s) to use.')
     parser.add_argument('--data',  default='data/Kasthuri15/3D/', required=True, 
                                     help='Data directory, contain trainA/trainB/validA/validB')
     parser.add_argument('--load',   help='Load the model path')
     parser.add_argument('--DIMX',  type=int, default=512)
     parser.add_argument('--DIMY',  type=int, default=512)
     parser.add_argument('--DIMZ',  type=int, default=1)
-    parser.add_argument('--SKIP',  type=int, default=4)
     parser.add_argument('--sample', help='Run the deployment on an instance',
-                                    action='store_true')
-    parser.add_argument('--deploy', help='Run the deployment on an instance',
                                     action='store_true')
     parser.add_argument('--srcDir', help='srcDir')
     parser.add_argument('--dstDir', help='dstDir')
@@ -441,13 +439,14 @@ if __name__ == '__main__':
     # python Exp_FusionNet2D_-VectorField.py --gpu='0' --data='arranged/'
 
     
-    train_ds = get_data(args.data, isTrain=True, isValid=False, isTest=False, shape=[args.DIMZ, args.DIMY, args.DIMX])
-    valid_ds = get_data(args.data, isTrain=False, isValid=True, isTest=False, shape=[args.DIMZ, args.DIMY, args.DIMX])
+    train_ds = get_data(args.data, isTrain=True,  isValid=False, isTest=False, shape=[args.DIMZ, args.DIMY, args.DIMX])
+    valid_ds = get_data(args.data, isTrain=False, isValid=True,  isTest=False, shape=[args.DIMZ, args.DIMY, args.DIMX])
     # test_ds  = get_data(args.data, isTrain=False, isValid=False, isTest=True)
 
 
-    train_ds  = PrefetchDataZMQ(train_ds, 4)
+    train_ds  = PrefetchDataZMQ(train_ds, 8)
     train_ds  = PrintData(train_ds)
+    valid_ds  = PrintData(valid_ds)
     model     = Model()
 
     os.environ['PYTHONWARNINGS'] = 'ignore'
